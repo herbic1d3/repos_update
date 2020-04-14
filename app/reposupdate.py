@@ -1,47 +1,62 @@
 import os
-import json
 import requests
 import time
-
 from datetime import datetime
 
-from prometheus_client.core import GaugeMetricFamily, REGISTRY
+from prometheus_client.core import InfoMetricFamily, CounterMetricFamily, REGISTRY
 from prometheus_client import start_http_server
 
 
 class ReposUpdate(object):
 
     def __init__(self):
-        self.url = "https://api.github.com/repos/{0}/commits"
+        self.url = "https://api.github.com/repos/{0}/tags"
         self.repos = os.environ.get("REPOS").split(',')
+        self.cache = {}
+        self.time = time.time()
+        self.timestamp = datetime.now().timestamp()
+        self.cache_timeout = float(os.environ.get('CACHE_TIMEOUT', 300))
 
     def collect(self):
         headers = {'Authorization': 'token {}'.format(os.environ.get("TOKEN", ""))}
+
         for repo in self.repos:
-            try:
-                response = requests.get(url=self.url.format(repo),headers=headers, verify=False, stream=False, timeout=5)
-            except requests.Timeout:
-                continue
-            except requests.ConnectionError:
-                continue
-
-            data = response.json()
             name = repo.replace('/','_').replace('-', '_')
-            commit = data[0]['commit']
-            commit_datetime = datetime.strptime(commit['author']['date'], '%Y-%m-%dT%H:%M:%SZ')
 
-            metric = GaugeMetricFamily(
-                "repo__{}".format(name),
-                "Repo `{}` last commit date".format(repo),
-                labels=["commit"])
-            metric.add_metric(['timestamp'], commit_datetime.timestamp())
-            metric.add_metric(['deltatime'], (datetime.now()-commit_datetime).total_seconds())
+            if time.time() - self.time > self.cache_timeout:
+                self.cache = {}
+                self.time = time.time()
+                self.timestamp = datetime.now().timestamp()
 
-            yield metric
+            if name not in self.cache:
+                try:
+                    response = requests.get(url=self.url.format(repo),headers=headers, verify=False, stream=False, timeout=5)
+                except requests.Timeout:
+                    continue
+                except requests.ConnectionError:
+                    continue
+
+                self.cache[name] = response.json()
+
+            metric_counter = CounterMetricFamily(
+                "repo__{}__tags_".format(name),
+                "Repo `{}` tags total".format(name),
+                labels=['tags']
+            )
+            metric_counter.add_metric([name], len(self.cache[name]), timestamp=self.timestamp)
+            yield metric_counter
+
+            metric_info = InfoMetricFamily(
+                "repo__{}__tag".format(name),
+                "Repo `{}` tag".format(name)
+            )
+            metric_info.add_metric(["tag"], {'name': self.cache[name][0]['name'] if len(self.cache[name]) else 'inf'}
+                                   , timestamp=self.timestamp)
+            yield metric_info
 
 
 if __name__ == "__main__":
     start_http_server(9853)
     REGISTRY.register(ReposUpdate())
     while True:
-        time.sleep(1)
+        time.sleep(600)

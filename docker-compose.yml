@@ -5,8 +5,9 @@ services:
     restart: always
     command: /usr/local/bin/python /app/reposupdate.py
     environment:
-      - REPOS=freeCodeCamp/freeCodeCamp,vegasbrianc/github-monitoring
+      - REPOS=freeCodeCamp/freeCodeCamp,cosmos/gaia
       - TOKEN=${TOKEN}
+      - CACHE_TIMEOUT=300 # cache period on seconds
     build:
       context: ./build/
     image: repos_update
