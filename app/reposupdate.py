@@ -14,7 +14,6 @@ class ReposUpdate(object):
         self.repos = os.environ.get("REPOS").split(',')
         self.cache = {}
         self.time = time.time()
-        self.timestamp = datetime.now().timestamp()
         self.cache_timeout = float(os.environ.get('CACHE_TIMEOUT', 600))
 
     def collect(self):
@@ -26,7 +25,6 @@ class ReposUpdate(object):
             if time.time() - self.time > self.cache_timeout:
                 self.cache = {}
                 self.time = time.time()
-                self.timestamp = datetime.now().timestamp()
 
             if name not in self.cache:
                 try:
@@ -43,15 +41,14 @@ class ReposUpdate(object):
                 "Repo `{}` tags total".format(name),
                 labels=['tags']
             )
-            metric_counter.add_metric([name], len(self.cache[name]), timestamp=self.timestamp)
+            metric_counter.add_metric([name], len(self.cache[name]))
             yield metric_counter
 
             metric_info = InfoMetricFamily(
                 "repo__{}__tag".format(name),
                 "Repo `{}` tag".format(name)
             )
-            metric_info.add_metric(["tag"], {'name': self.cache[name][0]['name'] if len(self.cache[name]) else 'inf'}
-                                   , timestamp=self.timestamp)
+            metric_info.add_metric(["tag"], {'name': self.cache[name][0]['name'] if len(self.cache[name]) else 'inf'})
             yield metric_info
 
 
