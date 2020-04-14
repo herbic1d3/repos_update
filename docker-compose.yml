@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  exporter:
+    restart: always
+    command: /usr/local/bin/python /app/reposupdate.py
+    environment:
+      - REPOS=freeCodeCamp/freeCodeCamp,vegasbrianc/github-monitoring
+      - TOKEN=${TOKEN}
+    build:
+      context: ./build/
+    image: repos_update
+    volumes:
+      - ./app/:/app/
+    ports:
+      - 9853:9853
