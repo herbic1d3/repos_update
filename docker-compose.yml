@@ -9,9 +9,8 @@ services:
       - TOKEN=${TOKEN}
       - CACHE_TIMEOUT=300 # cache period on seconds
     build:
-      context: ./build/
+      context: ./
+      dockerfile: ./build/Dockerfile
     image: repos_update
-    volumes:
-      - ./app/:/app/
     ports:
       - 9853:9853
