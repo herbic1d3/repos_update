@@ -15,7 +15,7 @@ class ReposUpdate(object):
         self.cache = {}
         self.time = time.time()
         self.timestamp = datetime.now().timestamp()
-        self.cache_timeout = float(os.environ.get('CACHE_TIMEOUT', 300))
+        self.cache_timeout = float(os.environ.get('CACHE_TIMEOUT', 600))
 
     def collect(self):
         headers = {'Authorization': 'token {}'.format(os.environ.get("TOKEN", ""))}
