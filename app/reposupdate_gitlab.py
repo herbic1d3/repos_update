@@ -57,7 +57,7 @@ class ReposUpdate(object):
 
 
 if __name__ == "__main__":
-    start_http_server(9853)
+    start_http_server(9854)
     REGISTRY.register(ReposUpdate())
     while True:
         time.sleep(600)
