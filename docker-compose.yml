@@ -2,10 +2,9 @@ version: "3.7"
 
 services:
   exporter:
-    restart: always
-    command: /usr/local/bin/python /app/reposupdate.py
+    command: /bin/bash `while [[ 1 == 1 ]]; do sleep 5; done
     environment:
-      - REPOS=freeCodeCamp/freeCodeCamp,cosmos/gaia
+      - REPOS=${REPOS}
       - TOKEN=${TOKEN}
       - CACHE_TIMEOUT=300 # cache period on seconds
     build:
